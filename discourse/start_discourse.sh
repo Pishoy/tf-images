@@ -2,9 +2,9 @@
 set -ex
 echo "checking env variables was set correctly "
 
-if [[ -z "$DISCOURSE_VERSION" ]] || [[ -z "$RAILS_ENV" ]] || [[ -z "$HOSTNAME" ]] || [[ -z "$DISCOURSE_HOSTNAME" ]] || [[ -z "$DISCOURSE_SMTP_USER_NAME" ]] || [[ -z "$DISCOURSE_SMTP_ADDRESS" ]] || [[ -z "$DISCOURSE_DEVELOPER_EMAILS" ]] || [[ -z "$DISCOURSE_SMTP_PORT" ]] || [[ -z "$LETSENCRYPT_ACCOUNT_EMAIL" ]] ; then
+if [[ -z "$DISCOURSE_VERSION" ]] || [[ -z "$RAILS_ENV" ]] || [[ -z "$HOSTNAME" ]] || [[ -z "$DISCOURSE_HOSTNAME" ]] || [[ -z "$DISCOURSE_SMTP_USER_NAME" ]] || [[ -z "$DISCOURSE_SMTP_ADDRESS" ]] || [[ -z "$DISCOURSE_DEVELOPER_EMAILS" ]] || [[ -z "$DISCOURSE_SMTP_PORT" ]] ; then
     echo " one of below variables are not set yet, Please set it in creating your container"
-    echo "DISCOURSE_VERSION RAILS_ENV HOSTNAME DISCOURSE_HOSTNAME DISCOURSE_SMTP_USER_NAME DISCOURSE_SMTP_ADDRESS DISCOURSE_DEVELOPER_EMAILS DISCOURSE_SMTP_PORT LETSENCRYPT_ACCOUNT_EMAIL"
+    echo "DISCOURSE_VERSION RAILS_ENV HOSTNAME DISCOURSE_HOSTNAME DISCOURSE_SMTP_USER_NAME DISCOURSE_SMTP_ADDRESS DISCOURSE_DEVELOPER_EMAILS DISCOURSE_SMTP_PORT"
     exit 1
 fi
 
@@ -65,7 +65,6 @@ export home=/var/www/discourse
 export upload_size=10m
 
 export UNICORN_WORKERS=4
-export LETSENCRYPT_DIR=/shared/letsencrypt
 export DISCOURSE_DB_HOST=
 export DISCOURSE_DB_PORT=
 export DISCOURSE_SMTP_ENABLE_START_TLS=true
@@ -165,66 +164,9 @@ chmod +x /etc/service/cron/run
 chmod +x /etc/service/nginx/run
 chmod +x /etc/service/unicorn/run
 
-## ssl enabling
-mkdir -p /shared/ssl/
 
-if [ -z "$LETSENCRYPT_ACCOUNT_EMAIL" ]; then echo "LETSENCRYPT_ACCOUNT_EMAIL ENV variable is required and has not been set."; exit 1; fi
-/bin/bash -c "if [[ ! \"$LETSENCRYPT_ACCOUNT_EMAIL\" =~ ([^@]+)@([^\.]+) ]]; then echo \"LETSENCRYPT_ACCOUNT_EMAIL is not a valid email address\"; exit 1; fi"
-cd /root && git clone --branch 2.8.2 --depth 1 https://github.com/Neilpang/acme.sh.git && cd /root/acme.sh
-touch /var/spool/cron/crontabs/root
-install -d -m 0755 -g root -o root $LETSENCRYPT_DIR
-cd /root/acme.sh && LE_WORKING_DIR="${LETSENCRYPT_DIR}" ./acme.sh --install --log "${LETSENCRYPT_DIR}/acme.sh.log"
-cd /root/acme.sh && LE_WORKING_DIR="${LETSENCRYPT_DIR}" ./acme.sh --upgrade --auto-upgrade
-
-cat << EOF > /etc/nginx/letsencrypt.conf
-user www-data;
-worker_processes auto;
-daemon on;
-
-events {
-  worker_connections 768;
-  # multi_accept on;
-}
-
-http {
-  sendfile on;
-  tcp_nopush on;
-  tcp_nodelay on;
-  keepalive_timeout 65;
-  types_hash_max_size 2048;
-
-  access_log /var/log/nginx/access.letsencrypt.log;
-  error_log /var/log/nginx/error.letsencrypt.log;
-
-  server {
-    listen 80;
-    listen [::]:80;
-
-    location ~ /.well-known {
-      root /var/www/discourse/public;
-      allow all;
-    }
-  }
-}
-
-EOF
-
-# need to add it im image /etc/runit/1.d/letsencrypt
 [[ -d /var/log/nginx ]] || mkdir /var/log/nginx
 
-chmod +x /etc/runit/1.d/letsencrypt
-if [[ -f /shared/ssl/${DISCOURSE_HOSTNAME}_ecc.key ]]; then 
-	echo certificate already exist no need to generate it
-else
-	echo start nginx with this config so we can generate keys form letsencrypt
-	/usr/sbin/nginx -c /etc/nginx/letsencrypt.conf
-	echo fix script before use it 
-	sed -i "s|\$DISCOURSE_HOSTNAME_ecc|\${DISCOURSE_HOSTNAME}_ecc|g" /etc/runit/1.d/letsencrypt
-	/etc/runit/1.d/letsencrypt
-	echo stop nginx that started by letsencrypt configuration
-	pkill -9 nginx
-fi
-# to test add export args then run  /etc/runit/1.d/letsencrypt then run /sbin/boot
 [[ -d /var/log/cron/ ]] || mkdir /var/log/cron
 
 cat << EOF > /.backup.sh
