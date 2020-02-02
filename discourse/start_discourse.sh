@@ -71,7 +71,9 @@ export DISCOURSE_SMTP_ENABLE_START_TLS=true
 export HOME=/root
 
 # verify contents of file /etc/nginx/conf.d/discourse.conf is exist and sed domain name by
-sed -i "s/forum1.threefold.io/$DISCOURSE_HOSTNAME/g"  /etc/nginx/conf.d/discourse.conf
+#sed -i "s/forum1.threefold.io/$DISCOURSE_HOSTNAME/g"  /etc/nginx/conf.d/discourse.conf
+
+mkdir -p /var/nginx/cache
 
 env > /root/boot_env
 
@@ -209,3 +211,4 @@ nginx -t
 
 cd $home
 /etc/service/unicorn/run &
+exec "$@"
