@@ -2,7 +2,7 @@
 set -ex
 echo "checking env variables was set correctly "
 
-for var in DISCOURSE_VERSION RAILS_ENV HOSTNAME DISCOURSE_HOSTNAME DISCOURSE_SMTP_USER_NAME DISCOURSE_SMTP_ADDRESS DISCOURSE_DEVELOPER_EMAILS DISCOURSE_SMTP_PORT
+for var in DISCOURSE_VERSION RAILS_ENV DISCOURSE_HOSTNAME DISCOURSE_SMTP_USER_NAME DISCOURSE_SMTP_ADDRESS DISCOURSE_DEVELOPER_EMAILS DISCOURSE_SMTP_PORT
     do
         if [ -z "${!var}" ]
         then
@@ -10,13 +10,6 @@ for var in DISCOURSE_VERSION RAILS_ENV HOSTNAME DISCOURSE_HOSTNAME DISCOURSE_SMT
                  exit 1
         fi
     done
-
-
-#if [[ ! "$HOSTNAME" == "$DISCOURSE_HOSTNAME" ]] ; then
-#	echo two varaibles HOSTNAME DISCOURSE_HOSTNAME are not the same 
-#	echo please set them equal
-#	exit 1
-#fi
 
 
 # to start unicorn make sure you started postgres and redis and export  all envs
@@ -74,9 +67,6 @@ export DISCOURSE_DB_PORT=
 export DISCOURSE_SMTP_ENABLE_START_TLS=true
 export HOME=/root
 
-# verify contents of file /etc/nginx/conf.d/discourse.conf is exist and sed domain name by
-#sed -i "s/forum1.threefold.io/$DISCOURSE_HOSTNAME/g"  /etc/nginx/conf.d/discourse.conf
-
 mkdir -p /var/nginx/cache
 
 env > /root/boot_env
@@ -109,12 +99,13 @@ else
         echo $home not empty so only update it
         cd $home
         git status
+	git stash
         git pull
 fi
 
 cat << EOF > /var/www/discourse/config/discourse.conf
 
-hostname = '$HOSTNAME'
+hostname = '$DISCOURSE_HOSTNAME'
 smtp_user_name = '$DISCOURSE_SMTP_USER_NAME'
 smtp_address = '$DISCOURSE_SMTP_ADDRESS'
 db_socket = '$DISCOURSE_DB_SOCKET'
@@ -191,7 +182,7 @@ cat /.restic_backup.sh >>  /.backup.sh
 chmod +x /.backup.sh
 
 cat << EOF > /.mycron
-00 05 * * * /.backup.sh >> /var/log/cron/backup.log
+00 05 * * * /.backup.sh >> /var/log/cron/backup.log 2>&1
 EOF
 
 
