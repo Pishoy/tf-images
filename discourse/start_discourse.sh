@@ -2,11 +2,15 @@
 set -ex
 echo "checking env variables was set correctly "
 
-if [[ -z "$DISCOURSE_VERSION" ]] || [[ -z "$RAILS_ENV" ]] || [[ -z "$HOSTNAME" ]] || [[ -z "$DISCOURSE_HOSTNAME" ]] || [[ -z "$DISCOURSE_SMTP_USER_NAME" ]] || [[ -z "$DISCOURSE_SMTP_ADDRESS" ]] || [[ -z "$DISCOURSE_DEVELOPER_EMAILS" ]] || [[ -z "$DISCOURSE_SMTP_PORT" ]] ; then
-    echo " one of below variables are not set yet, Please set it in creating your container"
-    echo "DISCOURSE_VERSION RAILS_ENV HOSTNAME DISCOURSE_HOSTNAME DISCOURSE_SMTP_USER_NAME DISCOURSE_SMTP_ADDRESS DISCOURSE_DEVELOPER_EMAILS DISCOURSE_SMTP_PORT"
-    exit 1
-fi
+for var in DISCOURSE_VERSION RAILS_ENV HOSTNAME DISCOURSE_HOSTNAME DISCOURSE_SMTP_USER_NAME DISCOURSE_SMTP_ADDRESS DISCOURSE_DEVELOPER_EMAILS DISCOURSE_SMTP_PORT
+    do
+        if [ -z "${!var}" ]
+        then
+                 echo "$var not set, Please set it in creating your container"
+                 exit 1
+        fi
+    done
+
 
 #if [[ ! "$HOSTNAME" == "$DISCOURSE_HOSTNAME" ]] ; then
 #	echo two varaibles HOSTNAME DISCOURSE_HOSTNAME are not the same 
