@@ -8,11 +8,11 @@ if [[ -z "$DISCOURSE_VERSION" ]] || [[ -z "$RAILS_ENV" ]] || [[ -z "$HOSTNAME" ]
     exit 1
 fi
 
-if [[ ! "$HOSTNAME" == "$DISCOURSE_HOSTNAME" ]] ; then
-	echo two varaibles HOSTNAME DISCOURSE_HOSTNAME are not the same 
-	echo please set them equal
-	exit 1
-fi
+#if [[ ! "$HOSTNAME" == "$DISCOURSE_HOSTNAME" ]] ; then
+#	echo two varaibles HOSTNAME DISCOURSE_HOSTNAME are not the same 
+#	echo please set them equal
+#	exit 1
+#fi
 
 
 # to start unicorn make sure you started postgres and redis and export  all envs
@@ -131,7 +131,7 @@ sed -i "s#pid /run/nginx.pid#daemon off#g" /etc/nginx/nginx.conf
 
 #  ensure we are on latest bundler
 cd $home
-gem update bundler
+#gem update bundler
 find $home ! -user discourse -exec chown discourse {} \+
 cd $home
 
@@ -210,5 +210,11 @@ nginx -t
 # TBD checking redis and postgres, should be running before start rails 
 
 cd $home
+echo wait 2 seconds to make sure redis and postgres are started 
+sleep 2
+# remove pid file unicron before start 
+
+[[ -f $home/tmp/pids/unicorn.pid ]] && rm $home/tmp/pids/unicorn.pid
+
 /etc/service/unicorn/run &
 exec "$@"
