@@ -1,4 +1,4 @@
-FROM  bishoyabdo/tf_discourse_http:latest
+FROM  bishoyabdo/tf_discourse:latest
 RUN rm -rf /var/www/discourse
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install net-tools iputils-ping -y \
