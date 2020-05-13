@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 set -ex
 echo "checking env variables was set correctly "
-for var in SEND_GRID_KEY SUPPORT_EMAIL_FROM SUPPORT_EMAIL_TO WEBHOOK_SECRET
+for var in SEND_GRID_KEY SUPPORT_EMAIL_FROM SUPPORT_EMAIL_TO WEBHOOK_SECRET 
     do
         if [ -z "${!var}" ]
         then
@@ -18,12 +18,11 @@ mkdir -p /run/sshd
 [[ -z "${TFWEBSERVER_PROJECTS_PEOPLE_BRANCH}" ]] &&  export TFWEBSERVER_PROJECTS_PEOPLE_BRANCH=development
 [[ -z "${PUBLIC_REPO_BRANCH}" ]] &&  export PUBLIC_REPO_BRANCH=master
 
-
 git clone https://github.com/threefoldfoundation/tfwebserver_projects_people -b ${TFWEBSERVER_PROJECTS_PEOPLE_BRANCH} /opt/tfwebserver_projects_people
 cd /opt/tfwebserver_projects_people/public/
 git clone https://github.com/threefoldfoundation/www_threefold_ecosystem/ -b ${PUBLIC_REPO_BRANCH} threefold
 cd /opt/tfwebserver_projects_people/ && ./build.sh
 
-mkdir /var/log/tfwebserver/ -p
-
+mkdir /var/log/{tfwebserver,ssh}/ -p
 supervisord -c /etc/supervisor/supervisord.conf
+exec "$@"
