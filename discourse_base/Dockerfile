@@ -5,6 +5,7 @@ FROM debian:buster-slim
 ENV PG_MAJOR 12
 ENV RUBY_ALLOCATOR /usr/lib/libjemalloc.so.1
 ENV RAILS_ENV production
+ENV FORUM_VERSION staging
 
 #LABEL maintainer="Sam Saffron \"https://twitter.com/samsaffron\""
 
@@ -135,11 +136,20 @@ ADD cron /etc/service/cron/run
 ADD rsyslog /etc/service/rsyslog/run
 ADD cron.d_anacron /etc/cron.d/anacron
 
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install net-tools iputils-ping -y \
+    && apt install -y libsodium-dev python-pip python3-pip tmux
+
+RUN pip3 install uwsgi flask pynacl requests flask_sessionstore
+RUN pip3 install Werkzeug==0.16.0
+RUN pip3 install uwsgi flask pynacl requests flask_sessionstore
+RUN pip3 install Werkzeug==0.16.0
+
 # Discourse specific bits
 RUN useradd discourse -s /bin/bash -m -U &&\
     mkdir -p /var/www &&\
     cd /var/www &&\
-    git clone https://github.com/threefoldtech/threefold-forums -b staging discourse &&\
+    git clone https://github.com/threefoldtech/threefold-forums -b $FORUM_VERSION discourse &&\
     cd discourse &&\
     git remote set-branches --add origin tests-passed &&\
     chown -R discourse:discourse /var/www/discourse &&\
@@ -148,21 +158,7 @@ RUN useradd discourse -s /bin/bash -m -U &&\
     bundle exec rake maxminddb:get &&\
     find /var/www/discourse/vendor/bundle -name tmp -type d -exec rm -rf {} +
 
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install net-tools iputils-ping -y \
-    && apt install -y libsodium-dev python-pip python3-pip tmux
 
-
-RUN pip3 install uwsgi flask pynacl requests flask_sessionstore
-RUN pip3 install Werkzeug==0.16.0
-
-#RUN git clone https://github.com/restic/restic \
-#    && cd restic \
-#    && go run build.go \
-#    && cp -p restic /usr/bin/restic \
-#    && rm -rf restic
-RUN pip3 install uwsgi flask pynacl requests flask_sessionstore
-RUN pip3 install Werkzeug==0.16.0
 # install supervisor
 RUN pip3 install supervisor
 COPY supervisor.conf /etc/supervisor/supervisord.conf

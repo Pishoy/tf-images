@@ -124,21 +124,17 @@ cd $home
 find $home ! -user discourse -exec chown discourse {} \+
 
 chmod +x /etc/service/unicorn/run
-mkdir -p /shared/log/rails
+
 [[ -d /var/log/exim4 ]] || mkdir -p /var/log/exim4
 [[ -f /var/log/exim4/mainlog ]] || touch /var/log/exim4/mainlog
-
 
 # TBD checking redis and postgres, should be running before start rails 
 
 cd $home
-# remove pid file unicron before start
-#[[ -f $home/tmp/pids/unicorn.pid ]] && rm $home/tmp/pids/unicorn.pid
-chown -R discourse:www-data /shared/log/rails
 mkdir -p /var/log/{ssh,postgres,redis,3bot,unicorn,nginx,cron}
 nginx -t
 
-# to start unicorn make sure you started postgres and redis and export  all envs
+# to start unicorn make sure you started postgres and redis
 bash /.prepare_postgres.sh
 
 # just start postgres to create intial db
