@@ -71,24 +71,6 @@ mkdir -p /var/nginx/cache
 
 env | grep -v "PATH\=" | grep -v "HOME\=" | grep -v "PWD\=" | grep -v "SHLVL\="|grep -v "TERM\=" >> /etc/environment
 
-[[ -d $home ]] || mkdir $home
-if [ "$(find $home -maxdepth 0 -empty)" ]; then
-	export fresh_install="yes"
-	echo $home is empty, then clone repo
-	git clone https://github.com/threefoldtech/threefold-forums -b $version $home
-	cd $home
-	mkdir -p tmp/pids
-	mkdir -p tmp/sockets
-	touch tmp/.gitkeep
-
-else
-        echo $home not empty so only update it
-        cd $home
-        git status
-	    git stash
-        git pull
-fi
-
 cat << EOF > /var/www/discourse/config/discourse.conf
 
 hostname = '$DISCOURSE_HOSTNAME'
